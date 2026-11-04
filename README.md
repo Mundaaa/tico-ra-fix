@@ -36,7 +36,7 @@ save folders so saves and states stay where tico puts them.
 | GBA / GB / GBC | `tico-mgba` | tested, unlocks work |
 | PS1 | `tico-duckstation` | tested, unlocks work |
 | GameCube / Wii | `tico-dolphin` | tested, unlocks work |
-| PS2 | NetherSX2 | no rebuild: fill its ini (below) |
+| PS2 | NetherSX2 | tested, unlocks work: no rebuild, fill its ini (below) |
 | DS | `tico-drasticDS` | **experimental**: login, game and RAM found; an unlock not confirmed yet |
 | 3DS, others | | not covered |
 
@@ -157,7 +157,8 @@ Achievements/Username = YOUR_RA_USERNAME
 Achievements/Token = YOUR_RA_TOKEN
 ```
 
-The token is the `ra_token` from step 2. NetherSX2 on Switch is Casual only.
+The token is the `ra_token` from step 2. The ini only exists once a PS2 game
+has been launched once. NetherSX2 on Switch is Casual only.
 
 ## DS (DraStic), experimental
 
@@ -250,7 +251,8 @@ Pas besoin de compiler : les émulateurs corrigés sont dans la
      mot de passe par un jeton, pour que ton mot de passe ne reste pas sur la
      SD ;
    - copie le fichier dans `tico/` à la racine de la SD.
-6. **PS2** : rien à remplacer. Dans `tico/system/nethersx2/nethersx2.ini`,
+6. **PS2** : rien à remplacer. Lance d'abord un jeu PS2 une fois (le fichier
+   n'existe qu'après), puis dans `tico/system/nethersx2/nethersx2.ini`,
    mets `Achievements/Enabled = true`, ton pseudo dans
    `Achievements/Username` et le jeton (`ra_token` de ton JSON) dans
    `Achievements/Token`.
