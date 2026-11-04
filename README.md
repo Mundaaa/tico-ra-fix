@@ -44,14 +44,59 @@ Side effects of a self-built core: tico does not count its playtime, Discord
 presence is off, and a core update from the tico Store puts the official
 build back (rebuild after updating).
 
-## Requirements
+## Quick install (prebuilt cores)
+
+No PC build needed: the patched cores are attached to the
+[latest release](../../releases/latest).
+
+1. **Download** from the release the `.nro` of the consoles you play, and
+   [config/session_override.example.json](config/session_override.example.json).
+2. **Put the SD card in your PC** (a card reader is far more reliable than
+   MTP for large files).
+3. **Back up each original core**: copy
+   `sdmc:/tico/modules/<core>/tico-<core>.nro` somewhere on your PC.
+4. **Replace it** with the downloaded `.nro`, same folder, same name. Touch
+   nothing else in the module folder.
+
+   | Console | Release file | Folder on the SD card |
+   |---|---|---|
+   | N64 | `tico-mupen64plus.nro` | `tico/modules/mupen64plus/` |
+   | GBA / GB / GBC | `tico-mgba.nro` | `tico/modules/mgba/` |
+   | PS1 | `tico-duckstation.nro` | `tico/modules/duckstation/` |
+   | GameCube / Wii | `tico-dolphin.nro` | `tico/modules/dolphin/` |
+
+5. **Write your `session_override.json`** (see
+   [step 2 below](#2-write-session_overridejson)): your Switch account id,
+   your RA username and your RA **token**, then copy it to
+   `sdmc:/tico/session_override.json`.
+6. **PS2**: no core to replace, fill in NetherSX2's ini ([see below](#ps2-nethersx2)).
+7. Put the SD card back, launch a game: the **"RA Playing"** toast appears
+   within a few seconds.
+
+**Do not update these cores from the tico Store**: an update puts the official
+build back, without the fix. To undo, put your original `.nro` back and delete
+`session_override.json`.
+
+The N64 core is built with the legacy OpenGL image: only the GLideN64
+renderer is in it. If you picked a Vulkan renderer (paraLLEl) in the N64
+settings, switch back to GLideN64.
+
+The release cores are built unmodified from ticohq's sources plus
+[patches/patch_ra.py](patches/patch_ra.py), at the commits listed in the
+release notes (GPL: that is their corresponding source). There is no DS build
+in the release: it embeds the paid DraStic core, so everyone has to build it
+from their own APK ([see below](#ds-drastic-experimental)).
+
+## Build it yourself
+
+### Requirements
 
 - A PC with **Docker** and **WSL 2** (Ubuntu) or Linux, plus `git` and `python3`.
 - For Dolphin: give WSL at least **8 GB of RAM** (`memory=8GB` in
   `%USERPROFILE%\.wslconfig`, then `wsl --shutdown`). With 3 GB the build
   freezes WSL.
 
-## 1. Build the cores
+### 1. Build the cores
 
 From WSL, in this repository:
 
@@ -65,7 +110,7 @@ bash scripts/build_core.sh dolphin
 Each `.nro` lands in `out/<core>/`. The first build pulls the Docker images
 (several GB). Dolphin takes 15 to 60 minutes; the others a few minutes.
 
-## 2. Write `session_override.json`
+### 2. Write `session_override.json`
 
 1. Copy [config/session_override.example.json](config/session_override.example.json)
    to `session_override.json`.
@@ -82,7 +127,7 @@ Each `.nro` lands in `out/<core>/`. The first build pulls the Docker images
 
 **Never share this file or commit it**: the token logs into your RA account.
 
-## 3. Install
+### 3. Install
 
 On the SD card (back up each original first):
 
@@ -173,7 +218,57 @@ s'affichent mais ne se débloquent pas. `tico.nro` (fermé) transmet aux
 tico, ils lisent ton compte dans un fichier que tu écris toi-même,
 `sdmc:/tico/session_override.json`.
 
-En bref :
+### Installation rapide (émulateurs déjà compilés)
+
+Pas besoin de compiler : les émulateurs corrigés sont dans la
+[dernière release](../../releases/latest).
+
+1. **Télécharge** dans la release le `.nro` des consoles auxquelles tu joues,
+   ainsi que [config/session_override.example.json](config/session_override.example.json).
+2. **Branche la carte SD au PC**, de préférence avec un lecteur de carte :
+   c'est bien plus fiable que le MTP pour les gros fichiers.
+3. **Sauvegarde chaque émulateur d'origine** : copie
+   `tico/modules/<émulateur>/tico-<émulateur>.nro` sur ton PC.
+4. **Remplace-le** par le `.nro` téléchargé, dans le même dossier et sous le
+   même nom. Ne touche à rien d'autre dans le dossier du module.
+
+   | Console | Fichier de la release | Dossier sur la SD |
+   |---|---|---|
+   | N64 | `tico-mupen64plus.nro` | `tico/modules/mupen64plus/` |
+   | GBA / GB / GBC | `tico-mgba.nro` | `tico/modules/mgba/` |
+   | PS1 | `tico-duckstation.nro` | `tico/modules/duckstation/` |
+   | GameCube / Wii | `tico-dolphin.nro` | `tico/modules/dolphin/` |
+
+5. **Prépare ton `session_override.json`** :
+   - renomme `session_override.example.json` en `session_override.json` ;
+   - remplace les trois `0123456789abcdef0123456789abcdef` par ton
+     identifiant de compte Switch : c'est le nom du dossier (32 caractères)
+     dans `tico/saves/users/` sur ta SD ;
+   - mets ton pseudo et ton mot de passe RetroAchievements ;
+   - lance `tools\get_ra_token.ps1` (clic droit → « Exécuter avec
+     PowerShell » ; il te demande le chemin du fichier) : il remplace ton
+     mot de passe par un jeton, pour que ton mot de passe ne reste pas sur la
+     SD ;
+   - copie le fichier dans `tico/` à la racine de la SD.
+6. **PS2** : rien à remplacer. Dans `tico/system/nethersx2/nethersx2.ini`,
+   mets `Achievements/Enabled = true`, ton pseudo dans
+   `Achievements/Username` et le jeton (`ra_token` de ton JSON) dans
+   `Achievements/Token`.
+7. Remets la SD dans la Switch et lance un jeu : la notification
+   **« RA Playing »** apparaît au bout de quelques secondes.
+
+**Ne mets pas ces émulateurs à jour depuis le tico Store** : une mise à jour
+remet la version officielle, sans le correctif. Pour revenir en arrière,
+remets les `.nro` d'origine et supprime `session_override.json`.
+
+N64 : cette version n'a que le moteur graphique GLideN64. Si tu avais choisi
+un moteur Vulkan (paraLLEl) dans les réglages N64, repasse sur GLideN64.
+
+DS : pas de version compilée dans la release, car elle contiendrait le cœur
+payant de DraStic. Il faut la compiler soi-même avec son propre APK (voir la
+partie anglaise).
+
+### Compiler soi-même, en bref
 
 1. Compiler : `bash scripts/build_core.sh mupen64plus` (puis `mgba`,
    `duckstation`, `dolphin`). Il faut Docker, WSL 2 et 8 Go de RAM pour WSL
