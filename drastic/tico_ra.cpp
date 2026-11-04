@@ -41,7 +41,7 @@ rc_client_t *s_client;
 const uint8_t *s_ram;
 uint8_t s_header[0x10];
 std::string s_rom_path;
-bool s_game_loaded;
+bool s_logged_in, s_game_loaded;
 unsigned s_frames;
 
 // libnx primitives, not std::thread: the host swaps in Android-style TLS
@@ -153,7 +153,28 @@ const uint8_t *FindRam() {
 
 // ---- rcheevos callbacks -----------------------------------------------------
 
+// Diagnostics: what the achievement set asks for, logged by LogDiagnostics.
+unsigned s_reads_ram, s_reads_dtcm, s_reads_other, s_ra_frames;
+uint32_t s_refused[8];
+unsigned s_refused_count;
+
 uint32_t RC_CCONV ReadMemory(uint32_t address, uint8_t *buffer, uint32_t num_bytes, rc_client_t *) {
+  if (address < kRamSize)
+    ++s_reads_ram;
+  else if (address >= 0x1000000 && address < 0x1004000)
+    ++s_reads_dtcm;
+  else
+    ++s_reads_other;
+  if (s_ram && address >= 0x1000000) {
+    bool seen = false;
+    for (unsigned i = 0; i < s_refused_count; i++)
+      seen |= s_refused[i] == address;
+    if (!seen && s_refused_count < 8)
+      s_refused[s_refused_count++] = address;
+  }
+  // The DS repeats its 4 MiB main RAM up to 0x02FFFFFF; some sets read a mirror.
+  if (address >= kRamSize && address < 0x1000000)
+    address &= kRamSize - 1;
   if (!s_ram || address >= kRamSize)
     return 0;
   if (num_bytes > kRamSize - address)
@@ -280,6 +301,39 @@ void LoadGame() {
       nullptr);
 }
 
+// Whether the RAM changes, what the set reads, and how its achievements stand.
+void LogDiagnostics() {
+  uint32_t sum = 0;
+  for (uint32_t off = 0; off < kRamSize; off += 64)
+    sum = sum * 31 + s_ram[off];
+  Log("RA diag: %u RA frames, RAM sum %08x, reads ram %u dtcm %u other %u", s_ra_frames, sum,
+      s_reads_ram, s_reads_dtcm, s_reads_other);
+  for (unsigned i = 0; i < s_refused_count; i++)
+    Log("RA diag: refused address 0x%07x", s_refused[i]);
+  s_reads_ram = s_reads_dtcm = s_reads_other = 0;
+
+  rc_client_achievement_list_t *list = rc_client_create_achievement_list(
+      s_client, RC_CLIENT_ACHIEVEMENT_CATEGORY_CORE, RC_CLIENT_ACHIEVEMENT_LIST_GROUPING_PROGRESS);
+  if (!list)
+    return;
+  unsigned states[4] = {};
+  for (uint32_t b = 0; b < list->num_buckets; b++) {
+    const rc_client_achievement_bucket_t &bucket = list->buckets[b];
+    Log("RA diag: bucket %u '%s': %u", bucket.bucket_type, bucket.label ? bucket.label : "",
+        bucket.num_achievements);
+    for (uint32_t a = 0; a < bucket.num_achievements; a++) {
+      const rc_client_achievement_t *ach = bucket.achievements[a];
+      if (ach->state < 4)
+        ++states[ach->state];
+      if (bucket.bucket_type == RC_CLIENT_ACHIEVEMENT_BUCKET_UNSUPPORTED && a < 5)
+        Log("RA diag:   unsupported %u %s", ach->id, ach->title);
+    }
+  }
+  Log("RA diag: states inactive %u active %u unlocked %u disabled %u", states[0], states[1],
+      states[2], states[3]);
+  rc_client_destroy_achievement_list(list);
+}
+
 } // namespace
 
 extern "C" void tico_ra_start(const char *rom_path) {
@@ -330,8 +384,10 @@ extern "C" void tico_ra_start(const char *rom_path) {
           Toast("RetroAchievements : connexion refusee");
           return;
         }
+        // The game loads once the RAM is found (tico_ra_frame): loading checks
+        // every address the set reads, and disables those it cannot read.
         Log("RA: logged in");
-        LoadGame();
+        s_logged_in = true;
       },
       nullptr);
 }
@@ -347,17 +403,24 @@ extern "C" void tico_ra_frame(int running) {
     callback();
 
   ++s_frames;
-  // Only for a game RA knows: without one nothing reads Drastic's memory.
+  // Only once logged in: without RA nothing reads Drastic's memory.
   // A whole-process scan is heavy: at 2 s, then every 5 s.
-  if (s_game_loaded && !s_ram && s_frames >= 120 && s_frames % 300 == 120) {
+  if (s_logged_in && !s_ram && s_frames >= 120 && s_frames % 300 == 120) {
     s_ram = FindRam();
-    if (s_ram)
+    if (s_ram) {
       Log("RA: DS RAM at %p after %u frames", s_ram, s_frames);
+      LoadGame();
+    }
   }
-  if (running && s_ram && s_game_loaded)
+  if (running && s_ram && s_game_loaded) {
     rc_client_do_frame(s_client);
-  else
+    // Diagnostics for bug reports: at 10 s, then every 30 s, six times
+    ++s_ra_frames;
+    if ((s_ra_frames == 600 || s_ra_frames % 1800 == 0) && s_ra_frames <= 9000)
+      LogDiagnostics();
+  } else {
     rc_client_idle(s_client);
+  }
 }
 
 extern "C" void tico_ra_stop(void) {

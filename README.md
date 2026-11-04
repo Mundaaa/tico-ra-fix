@@ -37,7 +37,7 @@ save folders so saves and states stay where tico puts them.
 | PS1 | `tico-duckstation` | tested, unlocks work |
 | GameCube / Wii | `tico-dolphin` | tested, unlocks work |
 | PS2 | NetherSX2 | tested, unlocks work: no rebuild, fill its ini (below) |
-| DS | `tico-drasticDS` | **experimental**: login, game and RAM found; an unlock not confirmed yet |
+| DS | `tico-drasticDS` | tested, unlocks work (build it yourself, see below) |
 | 3DS, others | | not covered |
 
 Side effects of a self-built core: tico does not count its playtime, Discord
@@ -85,7 +85,7 @@ The release cores are built unmodified from ticohq's sources plus
 [patches/patch_ra.py](patches/patch_ra.py), at the commits listed in the
 release notes (GPL: that is their corresponding source). There is no DS build
 in the release: it embeds the paid DraStic core, so everyone has to build it
-from their own APK ([see below](#ds-drastic-experimental)).
+from their own APK ([see below](#ds-drastic)).
 
 ## Build it yourself
 
@@ -160,7 +160,7 @@ Achievements/Token = YOUR_RA_TOKEN
 The token is the `ra_token` from step 2. The ini only exists once a PS2 game
 has been launched once. NetherSX2 on Switch is Casual only.
 
-## DS (DraStic), experimental
+## DS (DraStic)
 
 DraStic is a closed Android core with no memory API, so
 [drastic/tico_ra.cpp](drastic/tico_ra.cpp) adds RetroAchievements to tico's
@@ -175,9 +175,16 @@ host around it:
   itself (the host only does it for SMB game folders);
 - it stops the worker and closes the sockets before the core is torn down:
   hbloader runs tico again in the same process, and anything left running
-  crashes tico and Atmosphère.
+  crashes tico and Atmosphère;
+- it loads the game's achievement set only once the RAM is found: loading
+  checks every address the set reads, and rcheevos disables for good the
+  achievements whose addresses it cannot read; reads in the 0x02400000 to
+  0x02FFFFFF mirrors go to the 4 MiB main RAM, as on the console.
 
-It logs every step to `sdmc:/tico/debug/drastic_ra.txt`. Casual mode only.
+It logs every step to `sdmc:/tico/debug/drastic_ra.txt`, and a few
+`RA diag:` lines (achievement states, refused addresses) during the first
+minutes of play. The "RA Playing" toast shows a few seconds after the game
+starts. Casual mode only.
 
 DraStic is a **paid app**. The build needs **your own** APK
 (`com.dsemu.drastic`, r2.6.0.4a, arm64-v8a: extract it from a 64-bit Android
@@ -200,6 +207,7 @@ Then install `out/drastic/tico-drastic.nro` into `sdmc:/tico/modules/drastic/`.
 | `Login Failed` / `login failed` | wrong or expired token: run `get_ra_token.ps1` again |
 | `HTTP error Couldn't connect` (DS) | no network on the console |
 | `DS RAM not found yet` (DS) | the RAM search failed: please open an issue with the log |
+| `RA diag: ... disabled N` (DS) | N achievements read memory the core does not provide: open an issue with the `refused address` lines |
 
 ## Credits
 
@@ -283,7 +291,8 @@ partie anglaise).
    place de l'original dans `tico/modules/<émulateur>/` (sauvegarde les
    originaux avant).
 4. PS2 : remplir pseudo et jeton dans `tico/system/nethersx2/nethersx2.ini`.
-5. DS : expérimental, il faut ton propre APK DraStic acheté (voir plus haut).
+5. DS : fonctionne, mais il faut la compiler avec ton propre APK DraStic
+   acheté (voir la partie anglaise).
 
 Ne partage jamais ton `session_override.json` : il contient ton jeton RA.
 Une mise à jour d'un émulateur depuis le tico Store remet la version
