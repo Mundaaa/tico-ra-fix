@@ -1,0 +1,12 @@
+{
+  "user_id": "0123456789abcdef0123456789abcdef",
+  "saves_path": "sdmc:/tico/saves/users/0123456789abcdef0123456789abcdef/",
+  "states_path": "sdmc:/tico/states/users/0123456789abcdef0123456789abcdef/",
+  "saves_base": "sdmc:/tico/saves/",
+  "states_base": "sdmc:/tico/states/",
+  "inherits_shared": false,
+  "ra_enabled": true,
+  "ra_username": "YOUR_RA_USERNAME",
+  "ra_password": "YOUR_RA_PASSWORD",
+  "ra_hardcore_mode": false
+}

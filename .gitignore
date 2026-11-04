@@ -1,0 +1,8 @@
+# Build outputs (the DraStic one embeds the paid core: never commit it)
+out/
+*.nro
+*.zip
+*.apk
+*.apks
+# A real override holds your RA token
+session_override.json
