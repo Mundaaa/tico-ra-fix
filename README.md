@@ -83,7 +83,7 @@ settings, switch back to GLideN64.
 
 The release cores are built unmodified from ticohq's sources plus
 [patches/patch_ra.py](patches/patch_ra.py), at the commits listed in the
-release notes (GPL: that is their corresponding source). There is no DS build
+release notes: that is their corresponding source, as their licences require. There is no DS build
 in the release: it embeds the paid DraStic core, so everyone has to build it
 from their own APK ([see below](#ds-drastic)).
 
@@ -209,12 +209,34 @@ Then install `out/drastic/tico-drastic.nro` into `sdmc:/tico/modules/drastic/`.
 | `DS RAM not found yet` (DS) | the RAM search failed: please open an issue with the log |
 | `RA diag: ... disabled N` (DS) | N achievements read memory the core does not provide: open an issue with the `refused address` lines |
 
-## Credits
+## RetroAchievements rules
 
-The cores are tico's GPL forks by ticohq, built from their own scripts;
-rcheevos by RetroAchievements; DraStic by Exophase. The patches here are
-offered under the licence of the files they change (GPL-2.0-or-later for the
-tico cores).
+RetroAchievements accepts Hardcore unlocks only from emulators it has
+approved. The rebuilt N64, GBA, PS1 and GameCube/Wii cores identify
+themselves to RA exactly as tico's official ones; the DS module identifies
+itself as `tico-drastic`, a client RA does not know. Everything here runs in
+**Casual** (softcore) mode, but RA may still restrict modified clients one
+day: use it at your own risk, and switch back to the official cores once tico
+is fixed.
+
+## Licences and credits
+
+The cores are ticohq's forks, built from their own scripts, and each keeps its
+own licence. The release ships each licence text next to the binaries.
+
+| Core | Licence |
+|---|---|
+| `tico-mupen64plus` | GPL v2 |
+| `tico-mgba` | MPL 2.0 |
+| `tico-duckstation` | GPL v3 |
+| `tico-dolphin` | mostly GPL v2 or later; GPL v3 compatible as a whole |
+| `tico-drasticDS` (the host around DraStic) | MIT |
+
+[patches/patch_ra.py](patches/patch_ra.py) changes a file of each core, under
+that core's licence. The DS module in [drastic/](drastic/) and the scripts are
+offered under the MIT licence, like tico-drasticDS. rcheevos is by
+RetroAchievements (MIT), downloaded at build time. DraStic is by Exophase and
+is not distributed here in any form.
 
 ---
 
@@ -297,3 +319,16 @@ partie anglaise).
 Ne partage jamais ton `session_override.json` : il contient ton jeton RA.
 Une mise à jour d'un émulateur depuis le tico Store remet la version
 officielle : il faut alors recompiler.
+
+**Règles de RetroAchievements** : RA n'accepte les succès en mode Hardcore
+que depuis des émulateurs qu'il a approuvés. Les émulateurs N64, GBA, PS1 et
+GameCube/Wii recompilés s'identifient comme ceux de tico, mais le module DS
+s'annonce comme `tico-drastic`, un nom que RA ne connaît pas. Tout fonctionne
+en mode **Casual**, mais RA pourrait un jour restreindre les versions
+modifiées : à utiliser à tes risques, et reviens aux versions officielles dès
+que tico sera corrigé.
+
+**Licences** : chaque émulateur garde la sienne (mupen64plus GPL v2, mGBA
+MPL 2.0, DuckStation GPL v3, Dolphin surtout GPL v2 ou ultérieure, tico-drasticDS
+MIT). Leurs textes sont joints à la release. DraStic n'est distribué ici sous
+aucune forme.
