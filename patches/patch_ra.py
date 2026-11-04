@@ -52,3 +52,14 @@ for f in found:
     sub(f, session)
 if pathlib.Path('tico/TicoCore.cpp').exists() and 'm_raPassword.clear();' in pathlib.Path('tico/TicoCore.cpp').read_text(encoding='utf-8'):
     sub('tico/TicoCore.cpp', core)
+
+# Dolphin: with RA on, the game's hash is computed at boot (1-2 s from the SD),
+# which pushes slow-starting games (Mario Kart Wii...) past the 12 s "no picture"
+# watchdog, which then sends them back to tico. Give them 30 s.
+dolphin_main = pathlib.Path('Source/Core/DolphinNX/main.cpp')
+if dolphin_main.exists():
+    sub(dolphin_main, [
+        ("startup_started_at > std::chrono::seconds(12))",
+         "startup_started_at > std::chrono::seconds(30))"),
+        ('still at 0 presents after 12s', 'still at 0 presents after 30s'),
+    ])
