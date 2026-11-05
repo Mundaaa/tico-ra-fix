@@ -36,6 +36,11 @@ save folders so saves and states stay where tico puts them.
 | GBA / GB / GBC | `tico-mgba` | tested, unlocks work |
 | PS1 | `tico-duckstation` | tested, unlocks work |
 | GameCube / Wii | `tico-dolphin` | tested, unlocks work |
+| PSP | `tico-ppsspp` | tested, works |
+| Master System / Mega Drive / Game Gear / SG-1000 / Mega-CD | `tico-genesisplusgx` | tested, works |
+| Dreamcast / Naomi / Atomiswave | `tico-flycast` | tested, works |
+| SNES | `tico-snes9x` | tested, works |
+| Atari 2600 | `tico-stella` | tested, works |
 | PS2 | NetherSX2 | tested, unlocks work: no rebuild, fill its ini (below) |
 | DS | `tico-drasticDS` | tested, unlocks work (build it yourself, see below) |
 | 3DS, others | | not covered |
@@ -64,6 +69,11 @@ No PC build needed: the patched cores are attached to the
    | GBA / GB / GBC | `tico-mgba.nro` | `tico/modules/mgba/` |
    | PS1 | `tico-duckstation.nro` | `tico/modules/duckstation/` |
    | GameCube / Wii | `tico-dolphin.nro` | `tico/modules/dolphin/` |
+   | PSP | `tico-ppsspp.nro` | `tico/modules/ppsspp/` |
+   | Master System / Mega Drive / Game Gear / SG-1000 / Mega-CD | `tico-genesisplusgx.nro` | `tico/modules/genesis_plus_gx/` |
+   | Dreamcast / Naomi / Atomiswave | `tico-flycast.nro` | `tico/modules/flycast/` |
+   | SNES | `tico-snes9x.nro` | `tico/modules/snes9x/` |
+   | Atari 2600 | `tico-stella.nro` | `tico/modules/stella/` |
 
 5. **Write your `session_override.json`** (see
    [step 2 below](#2-write-session_overridejson)): your Switch account id,
@@ -105,10 +115,16 @@ bash scripts/build_core.sh mupen64plus
 bash scripts/build_core.sh mgba
 bash scripts/build_core.sh duckstation
 bash scripts/build_core.sh dolphin
+bash scripts/build_core.sh ppsspp
+bash scripts/build_core.sh genesisplusgx
+bash scripts/build_core.sh flycast
+bash scripts/build_core.sh snes9x
+bash scripts/build_core.sh stella
 ```
 
 Each `.nro` lands in `out/<core>/`. The first build pulls the Docker images
-(several GB). Dolphin takes 15 to 60 minutes; the others a few minutes.
+(several GB). Dolphin takes 15 to 60 minutes, PPSSPP about 20 (it first builds
+its own FFmpeg); the others a few minutes.
 
 ### 2. Write `session_override.json`
 
@@ -122,8 +138,8 @@ Each `.nro` lands in `out/<core>/`. The first build pulls the Docker images
    powershell -ExecutionPolicy Bypass -File tools\get_ra_token.ps1 -Json session_override.json
    ```
    The script contacts only retroachievements.org, writes `ra_token` and
-   deletes `ra_password`. mupen64plus and mGBA also accept `ra_password`, but
-   DuckStation and Dolphin need the token.
+   deletes `ra_password`. mupen64plus, mGBA and Flycast also accept
+   `ra_password`, but the other cores need the token.
 
 **Never share this file or commit it**: the token logs into your RA account.
 
@@ -138,10 +154,15 @@ On the SD card (back up each original first):
 | `out/mgba/tico-mgba.nro` | `sdmc:/tico/modules/mgba/` |
 | `out/duckstation/tico-duckstation.nro` | `sdmc:/tico/modules/duckstation/` |
 | `out/dolphin/tico-dolphin.nro` | `sdmc:/tico/modules/dolphin/` |
+| `out/ppsspp/tico-ppsspp.nro` | `sdmc:/tico/modules/ppsspp/` |
+| `out/genesisplusgx/tico-genesisplusgx.nro` | `sdmc:/tico/modules/genesis_plus_gx/` |
+| `out/flycast/tico-flycast.nro` | `sdmc:/tico/modules/flycast/` |
+| `out/snes9x/tico-snes9x.nro` | `sdmc:/tico/modules/snes9x/` |
+| `out/stella/tico-stella.nro` | `sdmc:/tico/modules/stella/` |
 
 Replace only the `.nro`, not the rest of the module folder. Launch a game: the
 "RA Playing" toast shows up, and the core's log in `sdmc:/tico/debug/` reads
-`Enabled: 1`.
+`Enabled: 1` (Flycast is built without a log, like tico's own).
 
 To undo: put the original `.nro` back and delete `session_override.json`.
 
@@ -203,17 +224,18 @@ Then install `out/drastic/tico-drastic.nro` into `sdmc:/tico/modules/drastic/`.
 | Log line | Meaning |
 |---|---|
 | `RA: Session missing` | no `sdmc:/tico/session_override.json`, or it is not valid JSON |
-| `Enabled: 0` | `ra_enabled` false, or no `ra_token` (DuckStation/Dolphin) |
+| `Enabled: 0` | `ra_enabled` false, or no `ra_token` |
 | `Login Failed` / `login failed` | wrong or expired token: run `get_ra_token.ps1` again |
 | `HTTP error Couldn't connect` (DS) | no network on the console |
+| no RA toast at all, `name lookup failed` in `debug.txt` | the console has no working network: restart it |
 | `DS RAM not found yet` (DS) | the RAM search failed: please open an issue with the log |
 | `RA diag: ... disabled N` (DS) | N achievements read memory the core does not provide: open an issue with the `refused address` lines |
 
 ## RetroAchievements rules
 
 RetroAchievements accepts Hardcore unlocks only from emulators it has
-approved. The rebuilt N64, GBA, PS1 and GameCube/Wii cores identify
-themselves to RA exactly as tico's official ones; the DS module identifies
+approved. The rebuilt cores identify themselves to RA exactly as tico's
+official ones; the DS module identifies
 itself as `tico-drastic`, a client RA does not know. Everything here runs in
 **Casual** (softcore) mode, but RA may still restrict modified clients one
 day: use it at your own risk, and switch back to the official cores once tico
@@ -230,12 +252,18 @@ own licence. The release ships each licence text next to the binaries.
 | `tico-mgba` | MPL 2.0 |
 | `tico-duckstation` | GPL v3 |
 | `tico-dolphin` | mostly GPL v2 or later; GPL v3 compatible as a whole |
+| `tico-ppsspp` | GPL v2 or later |
+| `tico-flycast` | GPL v2 |
+| `tico-stella` | GPL v2 |
+| `tico-snes9x` | Snes9x licence: free, **non-commercial only** |
+| `tico-genesisplusgx` | Genesis Plus GX licence: free, **non-commercial only**; a modified binary must come with its complete source, so the release attaches `tico-genesisplusgx-source.tar.xz` |
 | `tico-drasticDS` (the host around DraStic) | MIT |
 
 [patches/patch_ra.py](patches/patch_ra.py) changes a file of each core, under
 that core's licence. The DS module in [drastic/](drastic/) and the scripts are
 offered under the MIT licence, like tico-drasticDS. rcheevos is by
-RetroAchievements (MIT), downloaded at build time. DraStic is by Exophase and
+RetroAchievements (MIT), downloaded at build time. Snes9x and Genesis Plus GX
+must never be sold or used commercially. DraStic is by Exophase and
 is not distributed here in any form.
 
 ---
@@ -269,6 +297,14 @@ Pas besoin de compiler : les émulateurs corrigés sont dans la
    | GBA / GB / GBC | `tico-mgba.nro` | `tico/modules/mgba/` |
    | PS1 | `tico-duckstation.nro` | `tico/modules/duckstation/` |
    | GameCube / Wii | `tico-dolphin.nro` | `tico/modules/dolphin/` |
+   | PSP | `tico-ppsspp.nro` | `tico/modules/ppsspp/` |
+   | Master System / Mega Drive / Game Gear / SG-1000 / Mega-CD | `tico-genesisplusgx.nro` | `tico/modules/genesis_plus_gx/` |
+   | Dreamcast / Naomi / Atomiswave | `tico-flycast.nro` | `tico/modules/flycast/` |
+   | SNES | `tico-snes9x.nro` | `tico/modules/snes9x/` |
+   | Atari 2600 | `tico-stella.nro` | `tico/modules/stella/` |
+
+   Genesis Plus GX couvre Master System, Mega Drive, Game Gear, SG-1000 et
+   Mega-CD ; Flycast couvre Dreamcast, Naomi et Atomiswave.
 
 5. **Prépare ton `session_override.json`** :
    - renomme `session_override.example.json` en `session_override.json` ;
@@ -303,8 +339,8 @@ partie anglaise).
 ### Compiler soi-même, en bref
 
 1. Compiler : `bash scripts/build_core.sh mupen64plus` (puis `mgba`,
-   `duckstation`, `dolphin`). Il faut Docker, WSL 2 et 8 Go de RAM pour WSL
-   (Dolphin).
+   `duckstation`, `dolphin`, `ppsspp`, `genesisplusgx`, `flycast`, `snes9x`,
+   `stella`). Il faut Docker, WSL 2 et 8 Go de RAM pour WSL (Dolphin).
 2. Copier `config/session_override.example.json` en `session_override.json`,
    mettre ton identifiant de compte Switch (le nom du dossier dans
    `tico/saves/users/`), ton pseudo et ton mot de passe RA, puis lancer
@@ -320,15 +356,22 @@ Ne partage jamais ton `session_override.json` : il contient ton jeton RA.
 Une mise à jour d'un émulateur depuis le tico Store remet la version
 officielle : il faut alors recompiler.
 
+Pas de logo RA du tout au lancement d'un jeu ? Vérifie le réseau de la
+console (des lignes `name lookup failed` dans `tico/debug/debug.txt`) :
+redémarrer la Switch suffit souvent.
+
 **Règles de RetroAchievements** : RA n'accepte les succès en mode Hardcore
-que depuis des émulateurs qu'il a approuvés. Les émulateurs N64, GBA, PS1 et
-GameCube/Wii recompilés s'identifient comme ceux de tico, mais le module DS
+que depuis des émulateurs qu'il a approuvés. Les émulateurs recompilés
+s'identifient comme ceux de tico, mais le module DS
 s'annonce comme `tico-drastic`, un nom que RA ne connaît pas. Tout fonctionne
 en mode **Casual**, mais RA pourrait un jour restreindre les versions
 modifiées : à utiliser à tes risques, et reviens aux versions officielles dès
 que tico sera corrigé.
 
 **Licences** : chaque émulateur garde la sienne (mupen64plus GPL v2, mGBA
-MPL 2.0, DuckStation GPL v3, Dolphin surtout GPL v2 ou ultérieure, tico-drasticDS
-MIT). Leurs textes sont joints à la release. DraStic n'est distribué ici sous
+MPL 2.0, DuckStation GPL v3, Dolphin surtout GPL v2 ou ultérieure, PPSSPP
+GPL v2 ou ultérieure, Flycast et Stella GPL v2, tico-drasticDS MIT). Snes9x et
+Genesis Plus GX ont des licences gratuites **non commerciales** : interdit de
+les vendre ; le code source complet de Genesis Plus GX modifié est joint à la
+release. Leurs textes sont joints à la release. DraStic n'est distribué ici sous
 aucune forme.
